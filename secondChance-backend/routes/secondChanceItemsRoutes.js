@@ -26,11 +26,7 @@ const upload = multer({ storage: storage });
 router.get('/', async (req, res, next) => {
     logger.info('/ called');
     try {
-        //Step 2: task 1 - insert code here
-        //Step 2: task 2 - insert code here
-        //Step 2: task 3 - insert code here
-        //Step 2: task 4 - insert code here
-
+        const db = await connectToDatabase();
         const collection = db.collection("secondChanceItems");
         const secondChanceItems = await collection.find({}).toArray();
         res.json(secondChanceItems);
@@ -41,15 +37,16 @@ router.get('/', async (req, res, next) => {
 });
 
 // Add a new item
-router.post('/', {Step 3: Task 6 insert code here}, async(req, res,next) => {
+router.post('/', upload.single('file'), async(req, res,next) => {
     try {
-
-        //Step 3: task 1 - insert code here
-        //Step 3: task 2 - insert code here
-        //Step 3: task 3 - insert code here
-        //Step 3: task 4 - insert code here
-        //Step 3: task 5 - insert code here
-        res.status(201).json(secondChanceItem.ops[0]);
+        let secondChanceItem = req.body
+        const db = await connectToDatabase();
+        const collection = db.collection("secondChanceItems")
+        const lastElement = await collection.find().sort({ _id: -1 }).limit(1).toArray();
+        secondChanceItem._id = lastElement[0]?._id ? lastElement[0]._id : "0";
+        secondChanceItem.date_added =  Math.floor(new Date().getTime() / 1000);
+        await collection.insertOne({secondChanceItem})
+        res.status(201).json(secondChanceItem);
     } catch (e) {
         next(e);
     }
@@ -58,10 +55,16 @@ router.post('/', {Step 3: Task 6 insert code here}, async(req, res,next) => {
 // Get a single secondChanceItem by ID
 router.get('/:id', async (req, res, next) => {
     try {
-        //Step 4: task 1 - insert code here
-        //Step 4: task 2 - insert code here
-        //Step 4: task 3 - insert code here
-        //Step 4: task 4 - insert code here
+        const {id} = req.params;
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        const db = await connectToDatabase()
+        const collection = db.collection("secondChanceItems")
+        const item = await collection.find({_id: id});
+        if(!item) return res.status(404).json({ error: "Not found"})
+
+        res.status(200).json(item)
     } catch (e) {
         next(e);
     }
@@ -70,11 +73,31 @@ router.get('/:id', async (req, res, next) => {
 // Update and existing item
 router.put('/:id', async(req, res,next) => {
     try {
-        //Step 5: task 1 - insert code here
-        //Step 5: task 2 - insert code here
-        //Step 5: task 3 - insert code here
-        //Step 5: task 4 - insert code here
-        //Step 5: task 5 - insert code here
+        const {id} = req.params;
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        const db = await connectToDatabase()
+        const collection = db.collection("secondChanceItems")
+        const item = await collection.find({_id: id});
+        if(!item) return res.status(404).json({ error: "Not found"})
+        itemm.category = req.body.category;
+        item.condition = req.body.condition;
+        item.age_days = req.body.age_days;
+        item.description = req.body.description;
+        itemm.age_years = Number((secondChanceItem.age_days/365).toFixed(1));
+        item.updatedAt = new Date();
+        const updatepreloveItem = await collection.findOneAndUpdate(
+            { id },
+            { $set: item },
+            { returnDocument: 'after' }
+        );
+        if(updatepreloveItem) {
+            res.json({"uploaded":"success"});
+        } else {
+            res.json({"uploaded":"failed"});
+        }
+
     } catch (e) {
         next(e);
     }
@@ -83,10 +106,20 @@ router.put('/:id', async(req, res,next) => {
 // Delete an existing item
 router.delete('/:id', async(req, res,next) => {
     try {
-        //Step 6: task 1 - insert code here
-        //Step 6: task 2 - insert code here
-        //Step 6: task 3 - insert code here
-        //Step 6: task 4 - insert code here
+        const {id} = req.params;
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        const db = await connectToDatabase()
+        const collection = db.collection("secondChanceItems")
+        const item = await collection.find({_id: id});
+        if(!item) return res.status(404).json({ error: "Not found"})
+        const deletedItem = await collection.findOneAndDelete({ _id: new ObjectId(id) });
+
+        res.status(200).json({
+            message: "Item deleted successfully",
+            deletedItem: deletedItem.value
+        })
     } catch (e) {
         next(e);
     }
