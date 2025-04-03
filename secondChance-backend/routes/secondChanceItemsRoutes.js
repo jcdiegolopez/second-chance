@@ -2,9 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const router = express.Router();
+const router = express.Router();''
 const connectToDatabase = require('../models/db');
 const logger = require('../logger');
+const { ObjectId } = require('mongodb');
 
 // Define the upload directory path
 const directoryPath = 'public/images';
@@ -42,10 +43,10 @@ router.post('/', upload.single('file'), async(req, res,next) => {
         let secondChanceItem = req.body
         const db = await connectToDatabase();
         const collection = db.collection("secondChanceItems")
-        const lastElement = await collection.find().sort({ _id: -1 }).limit(1).toArray();
-        secondChanceItem._id = lastElement[0]?._id ? lastElement[0]._id : "0";
+        const lastElement = await collection.find().sort({ id: -1 }).limit(1).toArray();
+        secondChanceItem.id = lastElement[0]?.id ? String(Number(lastElement[0].id) + 1) : "0";
         secondChanceItem.date_added =  Math.floor(new Date().getTime() / 1000);
-        await collection.insertOne({secondChanceItem})
+        await collection.insertOne(secondChanceItem)
         res.status(201).json(secondChanceItem);
     } catch (e) {
         next(e);
@@ -56,12 +57,10 @@ router.post('/', upload.single('file'), async(req, res,next) => {
 router.get('/:id', async (req, res, next) => {
     try {
         const {id} = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
         const db = await connectToDatabase()
         const collection = db.collection("secondChanceItems")
-        const item = await collection.find({_id: id});
+        const item = await collection.findOne({id: id});
+        console.log(item)
         if(!item) return res.status(404).json({ error: "Not found"})
 
         res.status(200).json(item)
@@ -71,31 +70,35 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Update and existing item
-router.put('/:id', async(req, res,next) => {
+router.put('/:id', async (req, res, next) => {
     try {
-        const {id} = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
-        const db = await connectToDatabase()
-        const collection = db.collection("secondChanceItems")
-        const item = await collection.find({_id: id});
-        if(!item) return res.status(404).json({ error: "Not found"})
-        itemm.category = req.body.category;
-        item.condition = req.body.condition;
-        item.age_days = req.body.age_days;
-        item.description = req.body.description;
-        itemm.age_years = Number((secondChanceItem.age_days/365).toFixed(1));
-        item.updatedAt = new Date();
-        const updatepreloveItem = await collection.findOneAndUpdate(
+        const { id } = req.params;
+        const { category, condition, age_days, description } = req.body;
+        const db = await connectToDatabase();
+        const collection = db.collection("secondChanceItems");
+        const item = await collection.findOne({ id: id });
+        if (!item) return res.status(404).json({ error: "Not found" });
+        const age_years = Number((age_days / 365).toFixed(1));
+        const updatedAt = new Date();
+        const updateResult = await collection.findOneAndUpdate(
             { id },
-            { $set: item },
-            { returnDocument: 'after' }
+            { 
+                $set: { 
+                    category, 
+                    condition, 
+                    age_days, 
+                    age_years, 
+                    description, 
+                    updatedAt 
+                } 
+            },
+            { returnDocument: 'after' } 
         );
-        if(updatepreloveItem) {
-            res.json({"uploaded":"success"});
+
+        if (updateResult) {
+            res.json({ uploaded: "success", updatedItem: updateResult });
         } else {
-            res.json({"uploaded":"failed"});
+            res.status(500).json({ uploaded: "failed" });
         }
 
     } catch (e) {
@@ -103,22 +106,24 @@ router.put('/:id', async(req, res,next) => {
     }
 });
 
+
 // Delete an existing item
 router.delete('/:id', async(req, res,next) => {
     try {
         const {id} = req.params;
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
+  
         const db = await connectToDatabase()
         const collection = db.collection("secondChanceItems")
-        const item = await collection.find({_id: id});
+        const item = await collection.findOne({"id": id});
         if(!item) return res.status(404).json({ error: "Not found"})
-        const deletedItem = await collection.findOneAndDelete({ _id: new ObjectId(id) });
-
+        console.log(item)
+        const deletedItem = await collection.findOneAndDelete({ "id": id });
+        if (!deletedItem) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
         res.status(200).json({
             message: "Item deleted successfully",
-            deletedItem: deletedItem.value
+            deletedItem: deletedItem
         })
     } catch (e) {
         next(e);

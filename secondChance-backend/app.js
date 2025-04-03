@@ -34,7 +34,7 @@ app.use(pinoHttp({ logger }));
 //{{insert code here}}
 
 // Items API Task 2: add the secondChanceItemsRoutes to the server by using the app.use() method.
-app.use(secondChanceItemsRoutes)
+app.use('/api/secondchance/items',secondChanceItemsRoutes)
 
 // Search API Task 2: add the searchRoutes to the server by using the app.use() method.
 app.use(searchRoutes)
@@ -51,5 +51,5 @@ app.get("/",(req,res)=>{
 })
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`Server running on port http://localhost:${port}`);
 });
