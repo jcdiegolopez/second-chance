@@ -1,11 +1,9 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const router = express.Router();''
 const connectToDatabase = require('../models/db');
 const logger = require('../logger');
-const { ObjectId } = require('mongodb');
+require('dotenv').config()
 
 // Define the upload directory path
 const directoryPath = 'public/images';
@@ -25,14 +23,12 @@ const upload = multer({ storage: storage });
 
 // Get all secondChanceItems
 router.get('/', async (req, res, next) => {
-    logger.info('/ called');
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("secondChanceItems");
+        const collection = db.collection(process.env.MONGO_COLLECTION);
         const secondChanceItems = await collection.find({}).toArray();
         res.json(secondChanceItems);
     } catch (e) {
-        logger.console.error('oops something went wrong', e)
         next(e);
     }
 });
@@ -42,7 +38,7 @@ router.post('/', upload.single('file'), async(req, res,next) => {
     try {
         let secondChanceItem = req.body
         const db = await connectToDatabase();
-        const collection = db.collection("secondChanceItems")
+        const collection = db.collection(process.env.MONGO_COLLECTION)
         const lastElement = await collection.find().sort({ id: -1 }).limit(1).toArray();
         secondChanceItem.id = lastElement[0]?.id ? String(Number(lastElement[0].id) + 1) : "0";
         secondChanceItem.date_added =  Math.floor(new Date().getTime() / 1000);
@@ -58,7 +54,7 @@ router.get('/:id', async (req, res, next) => {
     try {
         const {id} = req.params;
         const db = await connectToDatabase()
-        const collection = db.collection("secondChanceItems")
+        const collection = db.collection(process.env.MONGO_COLLECTION)
         const item = await collection.findOne({id: id});
         console.log(item)
         if(!item) return res.status(404).json({ error: "Not found"})
@@ -75,7 +71,7 @@ router.put('/:id', async (req, res, next) => {
         const { id } = req.params;
         const { category, condition, age_days, description } = req.body;
         const db = await connectToDatabase();
-        const collection = db.collection("secondChanceItems");
+        const collection = db.collection(process.env.MONGO_COLLECTION);
         const item = await collection.findOne({ id: id });
         if (!item) return res.status(404).json({ error: "Not found" });
         const age_years = Number((age_days / 365).toFixed(1));
@@ -113,7 +109,7 @@ router.delete('/:id', async(req, res,next) => {
         const {id} = req.params;
   
         const db = await connectToDatabase()
-        const collection = db.collection("secondChanceItems")
+        const collection = db.collection(process.env.MONGO_COLLECTION)
         const item = await collection.findOne({"id": id});
         if(!item) return res.status(404).json({ error: "Not found"})
         console.log(item)
