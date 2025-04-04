@@ -1,4 +1,3 @@
-
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
@@ -10,34 +9,34 @@ const path = require('path')
 const connectToDatabase = require('./models/db')
 
 const app = express()
-app.use("*",cors())
+app.use('*', cors())
 const port = 3060
 
 connectToDatabase().then(() => {
-    pinoLogger.info('Connected to DB')
+  pinoLogger.info('Connected to DB')
 })
-    .catch((e) => console.error('Failed to connect to DB', e))
+  .catch((e) => console.error('Failed to connect to DB', e))
 
-app.use(express.json());
+app.use(express.json())
 
-const pinoHttp = require('pino-http');
+const pinoHttp = require('pino-http')
 const logger = require('./logger')
 
 app.use(pinoHttp({ logger }))
 app.use(express.static(path.join(__dirname, 'public')))
 app.use('/api/auth', authRoutes)
-app.use('/api/secondchance/items',secondChanceItemsRoutes)
-app.use('/api/secondchance/search',searchRoutes)
+app.use('/api/secondchance/items', secondChanceItemsRoutes)
+app.use('/api/secondchance/search', searchRoutes)
 
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).send('Internal Server Error')
-});
+  console.error(err)
+  res.status(500).send('Internal Server Error')
+})
 
-app.get('/',(req,res)=>{
-    res.send('Inside the server')
+app.get('/', (req, res) => {
+  res.send('Inside the server')
 })
 
 app.listen(port, () => {
-    console.log(`Server running on port http://localhost:${port}`)
-});
+  console.log(`Server running on port http://localhost:${port}`)
+})
