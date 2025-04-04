@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
         const authtoken = jwt.sign(payload, JWT_SECRET)
         ;
         logger.info('User logged successfully');
-        res.status(200).json({authtoken, usernName: userExist.firstName, userEmail: userExist.email})
+        res.status(200).json({authtoken, userName: userExist.firstName, userEmail: userExist.email})
         
     } catch (error) {
        next(error); 

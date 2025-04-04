@@ -6,6 +6,7 @@ const pinoLogger = require('./logger');
 const secondChanceItemsRoutes = require('./routes/secondChanceItemsRoutes');
 const searchRoutes = require('./routes/searchRoutes')
 const authRoutes = require('./routes/authRoutes');
+const path = require('path');
 
 const connectToDatabase = require('./models/db');
 const {loadData} = require("./util/import-mongo/index");
@@ -29,7 +30,7 @@ const pinoHttp = require('pino-http');
 const logger = require('./logger');
 
 app.use(pinoHttp({ logger }));
-
+app.use(express.static(path.join(__dirname, 'public')));
 // Use Routes
 // authRoutes Step 2: add the authRoutes and to the server by using the app.use() method.
 //{{insert code here}}
