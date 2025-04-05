@@ -19,6 +19,7 @@ connectToDatabase().then(() => {
 
 app.use(express.json())
 
+const { loadData } = require('./util/import-mongo/index.js')
 const pinoHttp = require('pino-http')
 const logger = require('./logger')
 
